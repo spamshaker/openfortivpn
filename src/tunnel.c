@@ -1286,7 +1286,16 @@ int run_tunnel(struct vpn_config *config)
 
 	// Step 2: connect to the HTTP interface and authenticate to get a
 	// cookie
-	ret = auth_log_in(&tunnel);
+	if (config->saml) {
+		char cookie[COOKIE_SIZE + 1];
+
+		printf("\nLogin at https://%s/remote/saml/start\n", config->gateway_host);
+		printf("Copy 'SVPNCOOKIE' and paste it here, including 'SVPNCOOKIE='\n");
+		read_input("", cookie, COOKIE_SIZE);
+		ret = auth_set_cookie(&tunnel, cookie);
+	} else {
+		ret = auth_log_in(&tunnel);
+	}
 	if (ret != 1) {
 		log_error("Could not authenticate to gateway. Please check the password, client certificate, etc.\n");
 		log_debug("%s (%d)\n", err_http_str(ret), ret);

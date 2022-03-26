@@ -410,15 +410,22 @@ end:
 
 static int get_auth_cookie(struct tunnel *tunnel, char *buf, uint32_t buffer_size)
 {
-	int ret = 0;
 	const char *line;
 
-	ret = ERR_HTTP_NO_COOKIE;
-
 	line = find_header(buf, "Set-Cookie: ", buffer_size);
+	return auth_set_cookie(tunnel, line);
+}
+
+int auth_set_cookie(struct tunnel *tunnel, const char *line)
+{
+	int ret = ERR_HTTP_NO_COOKIE;
+
 	if (line) {
-		if (strncmp(line, "SVPNCOOKIE=", 11) == 0) {
-			if (line[11] == ';' || line[11] == '\0') {
+		char *cookie;
+		
+		cookie = strstr(line, "SVPNCOOKIE=");
+		if (cookie != NULL && strncmp(cookie, "SVPNCOOKIE=", 11) == 0) {
+			if (cookie[11] == ';' || cookie[11] == '\0') {
 				log_debug("Empty cookie.\n");
 			} else {
 				char *end1;
@@ -426,22 +433,22 @@ static int get_auth_cookie(struct tunnel *tunnel, char *buf, uint32_t buffer_siz
 				char end1_save = '\0';
 				char end2_save = '\0';
 
-				end1 = strstr(line, "\r");
+				end1 = strstr(cookie, "\r");
 				if (end1 != NULL) {
 					end1_save = *end1;
 					end1[0] = '\0';
 				}
-				end2 = strstr(line, ";");
+				end2 = strstr(cookie, ";");
 				if (end2 != NULL) {
 					end2_save = *end2;
 					end2[0] = '\0';
 				}
-				log_debug("Cookie: %s\n", line);
-				strncpy(tunnel->cookie, line, COOKIE_SIZE);
+				log_debug("Cookie: %s\n", cookie);
+				strncpy(tunnel->cookie, cookie, COOKIE_SIZE);
 				tunnel->cookie[COOKIE_SIZE] = '\0';
-				if (strlen(line) > COOKIE_SIZE) {
+				if (strlen(cookie) > COOKIE_SIZE) {
 					log_error("Cookie larger than expected: %zu > %d\n",
-					          strlen(line), COOKIE_SIZE);
+					          strlen(cookie), COOKIE_SIZE);
 				} else {
 					ret = 1; // success
 				}

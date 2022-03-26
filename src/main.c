@@ -74,7 +74,7 @@
 #endif
 
 #define usage \
-"Usage: openfortivpn [<host>[:<port>]] [-u <user>] [-p <pass>]\n" \
+"Usage: openfortivpn [<host>[:<port>]] [-u <user>] [-p <pass>] [--saml]\n" \
 "                    [--otp=<otp>] [--otp-delay=<delay>] [--otp-prompt=<prompt>]\n" \
 "                    [--pinentry=<program>] [--realm=<realm>]\n" \
 "                    [--ifname=<ifname>] [--set-routes=<0|1>]\n" \
@@ -112,6 +112,7 @@ PPPD_USAGE \
 "                                " SYSCONFDIR "/openfortivpn/config).\n" \
 "  -u <user>, --username=<user>  VPN account username.\n" \
 "  -p <pass>, --password=<pass>  VPN account password.\n" \
+"  --saml                        Use single sign-on with SAML.\n" \
 "  -o <otp>, --otp=<otp>         One-Time-Password.\n" \
 "  --otp-prompt=<prompt>         Search for the OTP prompt starting with this string.\n" \
 "  --otp-delay=<delay>           Wait <delay> seconds before sending the OTP.\n" \
@@ -196,6 +197,7 @@ int main(int argc, char **argv)
 		.username = {'\0'},
 		.password = {'\0'},
 		.password_set = 0,
+		.saml = 0,
 		.otp = {'\0'},
 		.otp_prompt = NULL,
 		.otp_delay = 0,
@@ -252,6 +254,7 @@ int main(int argc, char **argv)
 		{"otp",                  required_argument, NULL, 'o'},
 		{"otp-prompt",           required_argument, NULL, 0},
 		{"otp-delay",            required_argument, NULL, 0},
+		{"saml",                 no_argument, &cli_cfg.saml, 1},
 		{"no-ftm-push",          no_argument, &cli_cfg.no_ftm_push, 1},
 		{"ifname",               required_argument, NULL, 0},
 		{"set-routes",	         required_argument, NULL, 0},
@@ -612,14 +615,14 @@ int main(int argc, char **argv)
 		goto user_error;
 	}
 	// Check username
-	if (cfg.username[0] == '\0')
+	if (cfg.username[0] == '\0' && !cfg.saml)
 		// Need either username or cert
 		if (cfg.user_cert == NULL) {
 			log_error("Specify a username.\n");
 			goto user_error;
 		}
 	// If username but no password given, interactively ask user
-	if (!cfg.password_set && cfg.username[0] != '\0') {
+	if (!cfg.password_set && cfg.username[0] != '\0' && !cfg.saml) {
 		char hint[USERNAME_SIZE + 1 + REALM_SIZE + 1 + GATEWAY_HOST_SIZE + 10];
 
 		sprintf(hint, "%s_%s_%s_password",

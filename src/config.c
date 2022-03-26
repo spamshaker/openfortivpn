@@ -50,6 +50,7 @@ const struct vpn_config invalid_cfg = {
 	.otp_prompt = NULL,
 	.otp_delay = -1,
 	.no_ftm_push = -1,
+	.saml = -1,
 	.pinentry = NULL,
 	.realm = {'\0'},
 	.iface_name = {'\0'},
@@ -518,6 +519,8 @@ void merge_config(struct vpn_config *dst, struct vpn_config *src)
 		dst->otp_delay = src->otp_delay;
 	if (src->no_ftm_push != invalid_cfg.no_ftm_push)
 		dst->no_ftm_push = src->no_ftm_push;
+	if (src->saml != invalid_cfg.saml)
+		dst->saml = src->saml;
 	if (src->pinentry) {
 		free(dst->pinentry);
 		dst->pinentry = src->pinentry;
