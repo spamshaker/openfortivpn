@@ -1289,7 +1289,7 @@ int run_tunnel(struct vpn_config *config)
 	if (config->saml) {
 		char cookie[COOKIE_SIZE + 1];
 
-		printf("\nLogin at https://%s/remote/saml/start\n", config->gateway_host);
+		printf("\nLogin at https://%s:%d/remote/saml/start\n", config->gateway_host, config->gateway_port);
 		printf("Copy 'SVPNCOOKIE' and paste it here, including 'SVPNCOOKIE='\n");
 		read_input("", cookie, COOKIE_SIZE);
 		ret = auth_set_cookie(&tunnel, cookie);
