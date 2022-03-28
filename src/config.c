@@ -290,6 +290,15 @@ int load_config(struct vpn_config *cfg, const char *filename)
 		} else if (strcmp(key, "realm") == 0) {
 			strncpy(cfg->realm, val, REALM_SIZE);
 			cfg->realm[REALM_SIZE] = '\0';
+		} else if (strcmp(key, "saml") == 0) {
+			int saml = strtob(val);
+
+			if (saml < 0) {
+				log_warn("Bad saml in configuration file: \"%s\".\n",
+				         val);
+				continue;
+			}
+			cfg->saml = saml;
 		} else if (strcmp(key, "set-dns") == 0) {
 			int set_dns = strtob(val);
 
