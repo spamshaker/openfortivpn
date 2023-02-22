@@ -68,6 +68,8 @@
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
+#define MAX_LINE_LENGTH 4000
 
 
 struct ofv_varr {
@@ -1255,6 +1257,27 @@ err_tcp_connect:
 	return 1;
 }
 
+
+char *trimwhitespace(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+
+  return str;
+}
+
 int run_tunnel(struct vpn_config *config)
 {
 	int ret;
@@ -1287,11 +1310,23 @@ int run_tunnel(struct vpn_config *config)
 	// Step 2: connect to the HTTP interface and authenticate to get a
 	// cookie
 	if (config->saml) {
-		char cookie[COOKIE_SIZE + 1];
+		FILE    *textfile;
+		char    cookie_str[MAX_LINE_LENGTH];
+
+		textfile = fopen("cookie.cfg", "r");
+		if(textfile == NULL)
+				return 1;
+		fgets(cookie_str, MAX_LINE_LENGTH, textfile);
+		fclose(textfile);
+
+		trimwhitespace(cookie_str);
+
+		char cookie[strlen(cookie_str) + 1];
+                strcpy(cookie, cookie_str);
 
 		printf("\nLogin at https://%s:%d/remote/saml/start\n", config->gateway_host, config->gateway_port);
 		printf("Copy 'SVPNCOOKIE' and paste it here, including 'SVPNCOOKIE='\n");
-		read_input("", cookie, COOKIE_SIZE);
+//		//read_input("", cookie, COOKIE_SIZE);
 		ret = auth_set_cookie(&tunnel, cookie);
 	} else {
 		ret = auth_log_in(&tunnel);
